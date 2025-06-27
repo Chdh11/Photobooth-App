@@ -1,5 +1,3 @@
-// app/gallery/[month]/page.tsx
-
 import fs from "fs";
 import path from "path";
 import Image from "next/image";
@@ -32,13 +30,12 @@ export default function GalleryPage({ params }: { params: { month: string } }) {
   });
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">📁 {month} Gallery</h1>
-
+    <div className="p-10">
+      <h1 className="text-2xl text-white font-bold mb-4">{month} Gallery</h1>
       {imageData.length === 0 ? (
         <p>No photos yet!</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-white">
           {imageData.map(({ src, message }, i) => (
             <div key={i} className="border rounded shadow p-2">
               <Image src={src} alt={`photo-${i}`} width={400} height={600} className="rounded" />

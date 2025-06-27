@@ -1,4 +1,3 @@
-// app/camera/page.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -105,10 +104,13 @@ export default function CameraPage() {
     };
   };
 
+    function cancelUpload(): void {
+        setPhotos([]);
+        setMessage("");
+        alert("Upload cancelled.");
+    }
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">📸 Photo Booth</h1>
-
+    <div className="p-6 flex flex-col items-center justify-center">
       <div className="relative w-full max-w-md mb-4">
         {loading && (
           <div className="absolute inset-0 z-10 bg-black bg-opacity-50 flex items-center justify-center rounded">
@@ -123,16 +125,16 @@ export default function CameraPage() {
       {photos.length < 3 && (
         <button
           onClick={capturePhoto}
-          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="mb-4 mt-4 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer "
         >
-          Click Photo ({photos.length + 1}/3)
+          Say Cheese {photos.length + 1}/3
         </button>
       )}
 
       {photos.length === 3 && (
         <>
           <textarea
-            className="w-full max-w-md border rounded p-2 mb-4"
+            className="w-full max-w-md border rounded p-2 mb-4 mt-4 text-black"
             placeholder="Write a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -145,10 +147,17 @@ export default function CameraPage() {
           </div>
           <button
             onClick={uploadToServer}
-            className="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            className="mt-6 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200  cursor-pointer"
           >
             Save to Library
           </button>
+          <button
+            onClick={cancelUpload}
+            className="mt-2 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200  cursor-pointer"
+          >
+            Cancel Upload
+          </button>
+          
         </>
       )}
     </div>
