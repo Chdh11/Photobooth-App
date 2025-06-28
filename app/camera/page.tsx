@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import supabase from "../../lib/supabaseClient"; 
 
 export default function CameraPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -113,32 +114,68 @@ export default function CameraPage() {
     });
   };
 
-  const uploadToServer = async () => {
-    const photoboothCanvas = await generatePhotostripCanvas();
-    if (!photoboothCanvas) return;
+  // const uploadToServer = async () => {
+  //   const photoboothCanvas = await generatePhotostripCanvas();
+  //   if (!photoboothCanvas) return;
 
-    photoboothCanvas.toBlob(async (blob) => {
-      if (!blob) return;
+  //   photoboothCanvas.toBlob(async (blob) => {
+  //     if (!blob) return;
 
-      const formData = new FormData();
-      formData.append("file", blob, "photobooth.jpg");
-      formData.append("month", "June2025");
-      formData.append("message", message);
+  //     const formData = new FormData();
+  //     formData.append("file", blob, "photobooth.jpg");
+  //     formData.append("month", "June2025");
+  //     formData.append("message", message);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+  //     const res = await fetch("/api/upload", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
 
-      if (res.ok) {
-        alert("Photo booth strip saved!");
-        setPhotos([]);
-        setMessage("");
-      } else {
-        alert("Upload failed.");
-      }
-    }, "image/jpeg");
-  };
+  //     if (res.ok) {
+  //       alert("Photo booth strip saved!");
+  //       setPhotos([]);
+  //       setMessage("");
+  //     } else {
+  //       alert("Upload failed.");
+  //     }
+  //   }, "image/jpeg");
+  // };
+
+  
+
+const uploadToSupabase = async () => {
+  const canvas = await generatePhotostripCanvas();
+  if (!canvas) return;
+
+  canvas.toBlob(async (blob) => {
+    if (!blob) return;
+
+    const fileName = `photostrip-${Date.now()}.jpg`;
+
+    const { data, error } = await supabase.storage
+      .from('photostrips')
+      .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+    if (error) {
+      alert("Upload failed: " + error.message);
+      return;
+    }
+
+    const { data: publicUrlData } = supabase
+      .storage
+      .from('photostrips')
+      .getPublicUrl(fileName);
+
+    await supabase.from('photos').insert([
+      { image_url: fileName, message }
+    ]);
+
+    alert("Uploaded to Supabase!");
+    setPhotos([]);
+    setMessage("");
+  }, "image/jpeg");
+};
+
 
   const downloadPhotostrip = async () => {
     const photoboothCanvas = await generatePhotostripCanvas();
@@ -194,7 +231,7 @@ export default function CameraPage() {
       {photos.length < 3 && (
         <button
           onClick={startCountdown}
-          className="mb-4 mt-2 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
+          className="mb-2 mt-4 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
         >
           Say Cheese {photos.length + 1}/3
         </button>
@@ -215,7 +252,7 @@ export default function CameraPage() {
             <p className="italic text-sm">{message}</p>
           </div>
           <button
-            onClick={uploadToServer}
+            onClick={uploadToSupabase}
             className="mt-6 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
           >
             Save to Library
