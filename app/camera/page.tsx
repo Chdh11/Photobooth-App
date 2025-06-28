@@ -46,7 +46,9 @@ export default function CameraPage() {
     canvas.height = video.videoHeight;
 
     ctx!.filter = filter;
-    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx!.translate(canvas.width, 0);
+    ctx!.scale(-1, 1);
+    ctx!.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL("image/jpeg");
     setPhotos((prev) => [...prev, dataURL].slice(0, 3));
@@ -143,14 +145,14 @@ export default function CameraPage() {
         <video
           ref={videoRef}
           className="rounded shadow w-full"
-          style={{ filter }}
+          style={{ filter, transform: "scaleX(-1)" }}
         />
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
 
       <div className="flex gap-3 mb-2 mt-4 flex-wrap justify-center">
-        <button onClick={() => setFilter("none")} className="px-3 py-1 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer ">Normal</button>
+        <button onClick={() => setFilter("none")} className="px-3 py-1 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Normal</button>
         <button onClick={() => setFilter("grayscale(100%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Black & White</button>
         <button onClick={() => setFilter("sepia(100%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Sepia</button>
         <button onClick={() => setFilter("contrast(150%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">High Contrast</button>
@@ -160,7 +162,7 @@ export default function CameraPage() {
       {photos.length < 3 && (
         <button
           onClick={capturePhoto}
-          className="mb-4 mt-4 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
+          className="mb-4 mt-2 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
         >
           Say Cheese {photos.length + 1}/3
         </button>
