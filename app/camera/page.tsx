@@ -9,13 +9,17 @@ export default function CameraPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("none");
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [flash, setFlash] = useState(false);
 
   useEffect(() => {
     let stream: MediaStream;
 
     const setupCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
@@ -52,6 +56,24 @@ export default function CameraPage() {
 
     const dataURL = canvas.toDataURL("image/jpeg");
     setPhotos((prev) => [...prev, dataURL].slice(0, 3));
+
+    // Trigger flash
+    setFlash(true);
+    setTimeout(() => setFlash(false), 100);
+  };
+
+  const startCountdown = () => {
+    let timeLeft = 3;
+    setCountdown(timeLeft);
+    const interval = setInterval(() => {
+      timeLeft -= 1;
+      setCountdown(timeLeft);
+      if (timeLeft === 0) {
+        clearInterval(interval);
+        setCountdown(null);
+        capturePhoto();
+      }
+    }, 1000);
   };
 
   const generatePhotostripCanvas = async (): Promise<HTMLCanvasElement | null> => {
@@ -147,6 +169,16 @@ export default function CameraPage() {
           className="rounded shadow w-full"
           style={{ filter, transform: "scaleX(-1)" }}
         />
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-white text-7xl font-bold drop-shadow-lg animate-pulse">
+              {countdown}
+            </div>
+          </div>
+        )}
+        {flash && (
+          <div className="absolute inset-0 bg-white opacity-80 animate-fade-out pointer-events-none"></div>
+        )}
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
@@ -161,7 +193,7 @@ export default function CameraPage() {
 
       {photos.length < 3 && (
         <button
-          onClick={capturePhoto}
+          onClick={startCountdown}
           className="mb-4 mt-2 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
         >
           Say Cheese {photos.length + 1}/3
