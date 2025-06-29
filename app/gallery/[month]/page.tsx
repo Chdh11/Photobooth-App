@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
-
 
 interface Photo {
   id: number;
@@ -22,23 +20,37 @@ export default function GalleryPage() {
 
   useEffect(() => {
     const fetchPhotos = async () => {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        console.error("User not authenticated", userError);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("photos")
         .select("id, image_url, message, created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching photos:", error);
       } else {
         const filtered = data.filter((photo) => {
-          const createdMonth = new Date(photo.created_at).toLocaleString("default", {
+          const photoDate = new Date(photo.created_at);
+          const formatted = `${photoDate.toLocaleString("default", {
             month: "long",
-            year: "numeric",
-          });
-          return createdMonth.replace(/\s+/g, '').toLowerCase() === month;
+          })}${photoDate.getFullYear()}`.toLowerCase();
+
+          return formatted === month;
         });
         setPhotos(filtered);
       }
+
       setLoading(false);
     };
 
@@ -63,8 +75,8 @@ export default function GalleryPage() {
                   supabase.storage.from("photostrips").getPublicUrl(image_url).data.publicUrl
                 }
                 alt={`photo-${i}`}
-                width={400}
-                height={600}
+                width={500}
+                height={900}
                 className="rounded"
               />
               {message && <p className="mt-2 text-sm italic">{message}</p>}

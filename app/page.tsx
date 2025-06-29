@@ -71,15 +71,12 @@ export default function Home() {
               <Link
                 key={month}
                 href={`/gallery/${month}`}
-                className="bg-pink-100 rounded-lg px-3 py-2 shadow flex flex-col gap-1 h-[75px]"
+                className="bg-pink-100 rounded-lg px-3 py-2 shadow flex flex-col gap-1 h-[50px]"
               >
                 <div className="flex items-center gap-2 text-pink-400">
                   <FolderIcon className="w-5 h-5" />
                   <span className="font-medium">{month}</span>
                 </div>
-                <span className="text-xs text-pink-400">
-                  {count} snap{count !== 1 && "s"}
-                </span>
               </Link>
             ))
           )}

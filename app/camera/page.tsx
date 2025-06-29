@@ -86,7 +86,7 @@ export default function CameraPage() {
       sampleImage.onload = async () => {
         const width = sampleImage.width;
         const height = sampleImage.height;
-        const totalHeight = height * 3 + 80;
+        const totalHeight = height * 3 + 100;
 
         const photoboothCanvas = document.createElement("canvas");
         photoboothCanvas.width = width;
@@ -166,9 +166,17 @@ const uploadToSupabase = async () => {
       .from('photostrips')
       .getPublicUrl(fileName);
 
-    await supabase.from('photos').insert([
-      { image_url: fileName, message }
+    // await supabase.from('photos').insert([
+    //   { image_url: fileName, message }
+    // ]);
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    await supabase.from("photos").insert([
+    { image_url: fileName, message, user_id: user?.id }
     ]);
+
 
     alert("Uploaded to Supabase!");
     setPhotos([]);
@@ -195,7 +203,7 @@ const uploadToSupabase = async () => {
 
   return (
     <div className="p-6 flex flex-col items-center justify-center">
-      <div className="relative w-full max-w-2xl mb-4">
+      <div className="relative w-full max-w-3xl mb-4">
         {loading && (
           <div className="absolute inset-0 z-10 bg-black bg-opacity-50 flex items-center justify-center rounded">
             <div className="text-white animate-pulse text-lg">Loading camera...</div>
