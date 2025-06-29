@@ -58,7 +58,7 @@ export default function GalleryPage() {
   }, [month]);
 
   return (
-    <div className="p-10">
+    <div className="p-10 bg-black ">
       <h1 className="text-2xl text-white font-bold mb-4">
         {month.charAt(0).toUpperCase() + month.slice(1)} Gallery
       </h1>

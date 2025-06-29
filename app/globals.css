@@ -20,10 +20,14 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  height: 100vh;
+  margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(to bottom right, #f9a8d4, #fce7f3, #f9a8d4); /* pink-300 → pink-100 → pink-300 */
+  color: #111827; /* Tailwind's gray-900 */
 }
+
+
 @keyframes floatSlow {
   0% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-10px) rotate(2deg); }
