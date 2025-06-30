@@ -86,7 +86,7 @@ export default function CameraPage() {
       sampleImage.onload = async () => {
         const width = sampleImage.width;
         const height = sampleImage.height;
-        const totalHeight = height * 3 + 100;
+        const totalHeight = height * 3 + 80;
 
         const photoboothCanvas = document.createElement("canvas");
         photoboothCanvas.width = width;
@@ -152,7 +152,7 @@ const uploadToSupabase = async () => {
 
     const fileName = `photostrip-${Date.now()}.jpg`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('photostrips')
       .upload(fileName, blob, { contentType: 'image/jpeg' });
 
@@ -161,10 +161,10 @@ const uploadToSupabase = async () => {
       return;
     }
 
-    const { data: publicUrlData } = supabase
-      .storage
-      .from('photostrips')
-      .getPublicUrl(fileName);
+    // const { data: publicUrlData } = supabase
+    //   .storage
+    //   .from('photostrips')
+    //   .getPublicUrl(fileName);
 
     // await supabase.from('photos').insert([
     //   { image_url: fileName, message }
@@ -175,7 +175,7 @@ const uploadToSupabase = async () => {
 
     await supabase.from("photos").insert([
     { image_url: fileName, message, user_id: user?.id }
-    ]);
+  ]);
 
 
     alert("Uploaded to Supabase!");

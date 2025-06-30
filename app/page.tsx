@@ -11,7 +11,6 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
 type FolderData = {
   month: string;
-  count: number;
 };
 
 export default function Home() {
@@ -67,7 +66,7 @@ export default function Home() {
           {folders.length === 0 ? (
             <p className="text-gray-400 italic">No folders yet</p>
           ) : (
-            folders.map(({ month, count }) => (
+            folders.map(({ month }) => (
               <Link
                 key={month}
                 href={`/gallery/${month}`}
