@@ -2,27 +2,21 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-
 import { createClient } from '@/lib/supabaseServer'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { error, data: authData } = await supabase.auth.signInWithPassword(data)
 
-  if (error) {
-//     if (error.message.includes("Invalid login credentials")) {
-//     throw new Error("User not found. Please sign up first.");
-//   }
-//   throw new Error(`Login failed: ${error.message}`);
-redirect('/error')
+  if (error || !authData.user) {
+    // If login fails or user is not found
+    redirect('/error')
   }
 
   revalidatePath('/', 'layout')
@@ -32,19 +26,23 @@ redirect('/error')
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signUp(data)
+  const { error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://photobooth-nine-gamma.vercel.app'}/`,
+    },
+  })
 
   if (error) {
-    throw new Error(`Login failed: ${error.message}`);
+    redirect('/error')
   }
 
-  revalidatePath('/', 'layout')
+  // Redirect user to "check your email" message
   redirect('/verify-email')
 }
