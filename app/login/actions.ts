@@ -39,18 +39,12 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { data: signUpData, error } = await supabase.auth.signUp(data)
+  const { error } = await supabase.auth.signUp(data)
 
   if (error) {
-    redirect('/error')
+    throw new Error(`Login failed: ${error.message}`);
   }
-
-  if (signUpData.user === null) {
-    return redirect('/verify-email')  
-  }
-
-  
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect('/verify-email')
 }
