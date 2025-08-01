@@ -7,14 +7,14 @@
 
 A fun web app to take pictures with your webcam, apply filters, add a message, and generate a photo strip that gets saved to your personal gallery.
 
-[Live App ➜ https://photobooth-nine-gamma.vercel.app](https://photobooth-nine-gamma.vercel.app)
+[[Try Live App]](https://photobooth-nine-gamma.vercel.app)
 
 Read the full build journey:  
-[Medium Article → https://medium.com/@chhavidhankhar07/building-a-photobooth-web-app-with-next-js-and-supabase-5a1c580bb26f](https://medium.com/@chhavidhankhar07/building-a-photobooth-web-app-with-next-js-and-supabase-5a1c580bb26f)
+[[Medium Article]](https://medium.com/@chhavidhankhar07/building-a-photobooth-web-app-with-next-js-and-supabase-5a1c580bb26f)
 
 ---
 
-## Features
+## 💬 Features
 
 - Webcam integration with real-time camera feed  
 - Countdown timer and flash effect before snap  
@@ -28,7 +28,7 @@ Read the full build journey:
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
 **Frontend**  
 - Next.js (App Router)  
@@ -47,7 +47,7 @@ Read the full build journey:
 
 ---
 
-## What I Learned
+## 🧠 Key Learnings
 
 - Hands-on practice with Next.js full-stack capabilities  
 - Leveraged Supabase for authentication, database, and storage  
@@ -58,7 +58,7 @@ Read the full build journey:
 
 ---
 
-## Future Improvements
+## 📈 Future Improvements
 
 - Delete photo strips from gallery  
 - Edit or delete photo messages  
