@@ -70,6 +70,6 @@ Read the full build journey:
 
 ---
 
-**Made by Chhavi Dhankhar**
+**Created By: Chhavi Dhankhar**
 
 
