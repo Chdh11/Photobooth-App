@@ -40,7 +40,8 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    redirect('/error')
+    console.error("Signup error:", error.message)
+    throw new Error(error.message)
   }
 
   // Redirect user to "check your email" message

@@ -12,11 +12,27 @@ export default function CameraPage() {
   const [filter, setFilter] = useState("none");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     let stream: MediaStream;
+    
 
     const setupCamera = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      const savedPhotos = localStorage.getItem("photobooth_photos");
+      const savedMessage = localStorage.getItem("photobooth_message");
+
+      if (savedPhotos) {
+        setPhotos(JSON.parse(savedPhotos));
+        localStorage.removeItem("photobooth_photos");
+      }
+
+      if (savedMessage) {
+        setMessage(savedMessage);
+        localStorage.removeItem("photobooth_message");
+      }
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "user" },
@@ -144,6 +160,16 @@ export default function CameraPage() {
   
 
 const uploadToSupabase = async () => {
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    localStorage.setItem("photobooth_photos", JSON.stringify(photos));
+    localStorage.setItem("photobooth_message", message);
+    window.location.href = "/login";
+    return;
+  }
+
   const canvas = await generatePhotostripCanvas();
   if (!canvas) return;
 
@@ -169,14 +195,14 @@ const uploadToSupabase = async () => {
     // await supabase.from('photos').insert([
     //   { image_url: fileName, message }
     // ]);
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+    // const {
+    //   data: { user }
+    // } = await supabase.auth.getUser();
 
     const { error: insertError } = await supabase
       .from("photos")
       .insert([
-        { image_url: fileName, message, user_id: user?.id }
+        { image_url: fileName, message, user_id: user.id }
       ]);
 
     if (insertError) {
@@ -270,7 +296,7 @@ const uploadToSupabase = async () => {
             onClick={uploadToSupabase}
             className="mt-6 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
           >
-            Save to Library
+            {user ? "Save to Library" : "Login to Save"}
           </button>
           <button
             onClick={cancelUpload}
