@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import supabase from "../../lib/supabaseClient"; 
+import { User } from "@supabase/supabase-js";
 
 export default function CameraPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -12,7 +13,7 @@ export default function CameraPage() {
   const [filter, setFilter] = useState("none");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     let stream: MediaStream;

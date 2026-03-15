@@ -6,6 +6,7 @@ import { FolderIcon } from "lucide-react";
 import CameraPage from "./camera/page";
 import { Poppins } from "next/font/google";
 import supabase from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
@@ -15,7 +16,7 @@ type FolderData = {
 };
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [folders, setFolders] = useState<FolderData[]>([]);
 
   useEffect(() => {
