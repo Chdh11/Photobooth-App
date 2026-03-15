@@ -153,7 +153,7 @@ const uploadToSupabase = async () => {
     const fileName = `photostrip-${Date.now()}.jpg`;
 
     const { error } = await supabase.storage
-      .from('photostrips')
+      .from('photostripes')
       .upload(fileName, blob, { contentType: 'image/jpeg' });
 
     if (error) {
@@ -173,9 +173,16 @@ const uploadToSupabase = async () => {
       data: { user }
     } = await supabase.auth.getUser();
 
-    await supabase.from("photos").insert([
-    { image_url: fileName, message, user_id: user?.id }
-  ]);
+    const { error: insertError } = await supabase
+      .from("photos")
+      .insert([
+        { image_url: fileName, message, user_id: user?.id }
+      ]);
+
+    if (insertError) {
+      console.error(insertError);
+      alert(insertError.message);
+    }
 
 
     alert("Uploaded to Supabase!");

@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
 
 interface Photo {
-  id: number;
+  id: string;
   image_url: string;
   message: string;
   created_at: string;
@@ -42,7 +42,7 @@ export default function GalleryPage() {
       } else {
         const filtered = data.filter((photo) => {
           const photoDate = new Date(photo.created_at);
-          const formatted = `${photoDate.toLocaleString("default", {
+          const formatted = `${photoDate.toLocaleString("en-US", {
             month: "long",
           })}${photoDate.getFullYear()}`.toLowerCase();
 
@@ -50,17 +50,19 @@ export default function GalleryPage() {
         });
         setPhotos(filtered);
       }
-
       setLoading(false);
     };
 
     if (month) fetchPhotos();
   }, [month]);
 
+  
+  
+
   return (
     <div className="p-10 bg-black ">
       <h1 className="text-2xl text-white font-bold mb-4">
-        {month.charAt(0).toUpperCase() + month.slice(1)} Gallery
+        {month?.charAt(0).toUpperCase() + month?.slice(1)} Gallery
       </h1>
       {loading ? (
         <p className="text-white">Loading...</p>
@@ -72,7 +74,7 @@ export default function GalleryPage() {
             <div key={id} className="border rounded shadow p-2">
               <Image
                 src={
-                  supabase.storage.from("photostrips").getPublicUrl(image_url).data.publicUrl
+                  supabase.storage.from("photostripes").getPublicUrl(image_url).data.publicUrl
                 }
                 alt={`photo-${i}`}
                 width={500}

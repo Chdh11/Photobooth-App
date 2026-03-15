@@ -11,6 +11,7 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
 type FolderData = {
   month: string;
+  count: number;
 };
 
 export default function Home() {
@@ -31,7 +32,7 @@ export default function Home() {
 
       data.forEach((photo) => {
         const date = new Date(photo.created_at);
-        const monthStr = `${date.toLocaleString("default", {
+        const monthStr = `${date.toLocaleString("en-US", {
           month: "long",
         })}${date.getFullYear()}`; // e.g., June2025
 
