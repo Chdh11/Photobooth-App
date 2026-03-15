@@ -16,7 +16,7 @@ type FolderData = {
 };
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null)
   const [folders, setFolders] = useState<FolderData[]>([]);
 
   useEffect(() => {

@@ -13,7 +13,7 @@ export default function CameraPage() {
   const [filter, setFilter] = useState("none");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     let stream: MediaStream;
