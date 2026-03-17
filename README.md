@@ -2,16 +2,16 @@
 
 A fun web app to take pictures with your webcam, apply filters, add a message, and generate a photo strip that gets saved to your personal gallery.
 
-[Live App ➜](https://photobooth-nine-gamma.vercel.app)
+[Live App](https://photobooth-nine-gamma.vercel.app)
 
 Read the full build journey:  
-[Medium Article →](https://medium.com/@chhavidhankhar07/building-a-photobooth-web-app-with-next-js-and-supabase-5a1c580bb26f)
+[Medium Article](https://medium.com/@chhavidhankhar07/building-a-photobooth-web-app-with-next-js-and-supabase-5a1c580bb26f)
 
 ---
 
 ![Vercel](https://img.shields.io/badge/Deployed-Vercel-black?logo=vercel)
 ![Supabase](https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase)
-![Made with Next.js](https://img.shields.io/badge/Next.js-13+-blue.svg?logo=next.js)
+![Made with Next.js](https://img.shields.io/badge/Next.js-15+-blue.svg?logo=next.js)
 ![Tailwind CSS](https://img.shields.io/badge/Style-TailwindCSS-blue?logo=tailwind-css)
 
 ---

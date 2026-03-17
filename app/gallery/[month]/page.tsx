@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import supabase from "@/lib/supabaseClient";
 
+
 interface Photo {
   id: string;
   image_url: string;
@@ -56,6 +57,57 @@ export default function GalleryPage() {
     if (month) fetchPhotos();
   }, [month]);
 
+      const downloadPhoto = async (fileName: string) => {
+        const { data } = supabase.storage
+          .from("photostripes")
+          .getPublicUrl(fileName);
+
+        const response = await fetch(data.publicUrl);
+        const blob = await response.blob();
+
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "photobooth.jpg";
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      };
+
+    const deletePhoto = async (photoId: string, fileName: string) => {
+      const confirmDelete = confirm("Are you sure you want to delete this photo?");
+      if (!confirmDelete) return;
+
+      // delete from storage
+      const { error: storageError } = await supabase.storage
+        .from("photostripes")
+        .remove([fileName]);
+
+      if (storageError) {
+        console.error(storageError);
+        alert("Failed to delete from storage");
+        return;
+      }
+
+      // delete from database
+      const { error: dbError } = await supabase
+        .from("photos")
+        .delete()
+        .eq("id", photoId);
+
+      if (dbError) {
+        console.error(dbError);
+        alert("Failed to delete from database");
+        return;
+      }
+
+      // update UI
+      setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
+    };
+
   
   
 
@@ -81,7 +133,22 @@ export default function GalleryPage() {
                 height={900}
                 className="rounded"
               />
-              {message && <p className="mt-2 text-sm italic">{message}</p>}
+              
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => downloadPhoto(image_url)}
+                  className="ml-2 px-1 py-1 text-sm bg-black  rounded cursor-pointer"
+                >
+                  <img src="/download.png" alt="download" className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={() => deletePhoto(id, image_url)}
+                  className="px-1 py-1 text-sm bg-black rounded cursor-pointer"
+                >
+                  <img src="/delete.png" alt="delete" className="w-6 h-6" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

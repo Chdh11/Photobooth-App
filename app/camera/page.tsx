@@ -13,7 +13,28 @@ export default function CameraPage() {
   const [filter, setFilter] = useState("none");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(null);
+
+  const filters = [
+  { name: "Normal", value: "contrast(120%) brightness(110%) saturate(110%)" },
+
+  // darker black & white with stronger contrast
+  { name: "B&W", value: "grayscale(100%) contrast(140%) brightness(90%)" },
+
+  { name: "Vintage", value: "sepia(50%) contrast(120%) brightness(110%)" },
+
+  { name: "High Contrast", value: "contrast(180%)" },
+
+  { name: "Dreamy", value: "brightness(130%) blur(1px)" },
+
+  { name: "Invert", value: "invert(100%)" },
+
+  // subtle pink tone
+  { name: "Soft Pink", value: "hue-rotate(-10deg) saturate(110%) brightness(110%)" },
+
+  // dark night aesthetic
+  { name: "Midnight", value: "brightness(90%) contrast(100%) saturate(80%) hue-rotate(50deg)" },
+];
 
   useEffect(() => {
     let stream: MediaStream;
@@ -229,6 +250,8 @@ const uploadToSupabase = async () => {
     link.click();
   };
 
+  
+
   function cancelUpload(): void {
     setPhotos([]);
     setMessage("");
@@ -263,12 +286,23 @@ const uploadToSupabase = async () => {
       <canvas ref={canvasRef} className="hidden" />
 
       <div className="flex gap-3 mb-2 mt-4 flex-wrap justify-center">
-        <button onClick={() => setFilter("none")} className="px-3 py-1 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Normal</button>
+        {/* <button onClick={() => setFilter("none")} className="px-3 py-1 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Normal</button>
         <button onClick={() => setFilter("grayscale(100%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Black & White</button>
         <button onClick={() => setFilter("sepia(100%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Sepia</button>
         <button onClick={() => setFilter("contrast(150%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">High Contrast</button>
-        <button onClick={() => setFilter("hue-rotate(90deg)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Hue Shift</button>
+        <button onClick={() => setFilter("hue-rotate(90deg)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Hue Shift</button> */}
+
+        {filters.map((f) => (
+        <button
+          key={f.name}
+          onClick={() => setFilter(f.value)}
+          className="px-3 py-2 bg-pink-100 text-pink-400 rounded"
+        >
+          {f.name}
+        </button>
+      ))}
       </div>
+      
 
       {photos.length < 3 && (
         <button

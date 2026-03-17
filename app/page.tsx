@@ -66,7 +66,7 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen flex flex-row items-start justify-center bg-gradient-to-br from-pink-300 via-pink-100 to-pink-300 text-gray-900 p-6 gap-10">
+    <main className="relative min-h-screen flex flex-col lg:flex-row items-start justify-center bg-gradient-to-br from-pink-300 via-pink-100 to-pink-300 text-gray-900 p-6 gap-10">
       <div>
         <div>
           <h1
