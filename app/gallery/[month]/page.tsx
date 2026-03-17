@@ -122,7 +122,7 @@ export default function GalleryPage() {
         <p className="text-white">No photos yet!</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-white">
-          {photos.map(({ id, image_url, message }, i) => (
+          {photos.map(({ id, image_url }, i) => (
             <div key={id} className="border rounded shadow p-2">
               <Image
                 src={
