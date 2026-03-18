@@ -270,6 +270,9 @@ const uploadToSupabase = async () => {
           ref={videoRef}
           className="rounded shadow w-full"
           style={{ filter, transform: "scaleX(-1)" }}
+          autoPlay
+          playsInline
+          muted
         />
         {countdown !== null && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
