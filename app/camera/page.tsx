@@ -85,24 +85,34 @@ export default function CameraPage() {
     if (!canvas || !video) return;
 
     const CAPTURE_WIDTH = 960;
-    const CAPTURE_HEIGHT = 720; // 4:3 ratio
+    const CAPTURE_HEIGHT = 720; // 4:3
 
     canvas.width = CAPTURE_WIDTH;
     canvas.height = CAPTURE_HEIGHT;
 
     const ctx = canvas.getContext("2d");
-    // canvas.width = video.videoWidth;
-    // canvas.height = video.videoHeight;
+    if (!ctx) return;
 
-    ctx!.filter = filter;
-    ctx!.translate(canvas.width, 0);
-    ctx!.scale(-1, 1);
-    ctx!.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // ✅ reset before applying transforms
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    const dataURL = canvas.toDataURL("image/jpeg");
+    // ✅ apply filter properly
+    ctx.filter = filter;
+
+    // ✅ mirror
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+
+    ctx.drawImage(video, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
+
+    // ✅ reset again (important for next operations)
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.filter = "none";
+
+    const dataURL = canvas.toDataURL("image/jpeg", 0.9);
+
     setPhotos((prev) => [...prev, dataURL].slice(0, 3));
 
-    // Trigger flash
     setFlash(true);
     setTimeout(() => setFlash(false), 100);
   };
@@ -121,42 +131,50 @@ export default function CameraPage() {
     }, 1000);
   };
 
-  const generatePhotostripCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    if (photos.length < 3) return null;
+  const generatePhotostripCanvas = async () => {
+  if (photos.length < 3) return null;
 
-    const sampleImage = new Image();
-    sampleImage.src = photos[0];
-    return new Promise((resolve) => {
-      sampleImage.onload = async () => {
-        const width = sampleImage.width;
-        const height = sampleImage.height;
-        const totalHeight = height * 3 + 80;
+  const PHOTO_W = 960;
+  const PHOTO_H = 720;
+  const MESSAGE_SPACE = 120;
 
-        const photoboothCanvas = document.createElement("canvas");
-        photoboothCanvas.width = width;
-        photoboothCanvas.height = totalHeight;
-        const ctx = photoboothCanvas.getContext("2d");
-        if (!ctx) return resolve(null);
+  const canvas = document.createElement("canvas");
+  canvas.width = PHOTO_W;
+  canvas.height = PHOTO_H * 3 + MESSAGE_SPACE;
 
-        for (let i = 0; i < photos.length; i++) {
-          const img = new Image();
-          img.src = photos[i];
-          await new Promise((res) => {
-            img.onload = () => {
-              ctx.drawImage(img, 0, i * height, width, height);
-              res(null);
-            };
-          });
-        }
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
 
-        ctx.fillStyle = "#fff";
-        ctx.font = "20px sans-serif ";
-        ctx.fillText(message, 10, totalHeight - 30);
+  // white background
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        resolve(photoboothCanvas);
+  for (let i = 0; i < photos.length; i++) {
+    const img = new Image();
+    img.src = photos[i];
+
+    await new Promise((resolve) => {
+      img.onload = () => {
+        // ✅ NO distortion (fixed dimensions)
+        ctx.drawImage(img, 0, i * PHOTO_H, PHOTO_W, PHOTO_H);
+        resolve(null);
       };
     });
-  };
+  }
+
+  // ✅ message styling (safe + centered)
+  ctx.fillStyle = "#000";
+  ctx.font = "28px sans-serif";
+  ctx.textAlign = "center";
+
+  ctx.fillText(
+    message || "",
+    canvas.width / 2,
+    PHOTO_H * 3 + 70
+  );
+
+  return canvas;
+};
 
   // const uploadToServer = async () => {
   //   const photoboothCanvas = await generatePhotostripCanvas();
