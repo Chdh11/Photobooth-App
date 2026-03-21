@@ -84,9 +84,15 @@ export default function CameraPage() {
     const video = videoRef.current;
     if (!canvas || !video) return;
 
+    const CAPTURE_WIDTH = 960;
+    const CAPTURE_HEIGHT = 720; // 4:3 ratio
+
+    canvas.width = CAPTURE_WIDTH;
+    canvas.height = CAPTURE_HEIGHT;
+
     const ctx = canvas.getContext("2d");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // canvas.width = video.videoWidth;
+    // canvas.height = video.videoHeight;
 
     ctx!.filter = filter;
     ctx!.translate(canvas.width, 0);
@@ -259,97 +265,127 @@ const uploadToSupabase = async () => {
   }
 
   return (
-    <div className="p-6 flex flex-col items-center justify-center">
-      <div className="relative w-full max-w-3xl mb-4">
+  <div className="w-full max-w-sm md:max-w-md lg:max-w-xl mx-auto px-4 py-6">
+    <div className="bg-white/90 rounded-2xl shadow-xl p-4 sm:p-5 flex flex-col items-center">
+
+      {/* Camera */}
+      <div className="relative w-full mb-4 overflow-hidden rounded-xl">
         {loading && (
-          <div className="absolute inset-0 z-10 bg-black bg-opacity-50 flex items-center justify-center rounded">
-            <div className="text-white animate-pulse text-lg">Loading camera...</div>
+          <div className="absolute inset-0 z-10 bg-black/50 flex items-center justify-center">
+            <div className="text-white animate-pulse text-lg">
+              Loading camera...
+            </div>
           </div>
         )}
+
         <video
           ref={videoRef}
-          className="rounded shadow w-full"
+          className="w-full aspect-[4/3] max-h-[60vh] object-cover"
           style={{ filter, transform: "scaleX(-1)" }}
           autoPlay
           playsInline
           muted
         />
+
         {countdown !== null && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-white text-7xl font-bold drop-shadow-lg animate-pulse">
+            <div className="text-white text-6xl sm:text-7xl font-bold drop-shadow-lg animate-pulse">
               {countdown}
             </div>
           </div>
         )}
+
         {flash && (
-          <div className="absolute inset-0 bg-white opacity-80 animate-fade-out pointer-events-none"></div>
+          <div className="absolute inset-0 bg-white/80 animate-fade-out pointer-events-none" />
         )}
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
 
-      <div className="flex gap-3 mb-2 mt-4 flex-wrap justify-center">
-        {/* <button onClick={() => setFilter("none")} className="px-3 py-1 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Normal</button>
-        <button onClick={() => setFilter("grayscale(100%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Black & White</button>
-        <button onClick={() => setFilter("sepia(100%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Sepia</button>
-        <button onClick={() => setFilter("contrast(150%)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">High Contrast</button>
-        <button onClick={() => setFilter("hue-rotate(90deg)")} className="px-3 py-2 bg-pink-100 text-pink-400 rounded w-[130px] hover:bg-pink-200 cursor-pointer">Hue Shift</button> */}
-
+      {/* Filters */}
+      <div className="flex flex-wrap justify-center gap-2 w-full max-w-xs">
         {filters.map((f) => (
-        <button
-          key={f.name}
-          onClick={() => setFilter(f.value)}
-          className="px-3 py-2 bg-pink-100 text-pink-400 rounded"
-        >
-          {f.name}
-        </button>
-      ))}
+          <button
+            key={f.name}
+            onClick={() => setFilter(f.value)}
+            className="px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm md:px-4 md:py-2 md:text-base bg-pink-100 text-pink-400 hover:bg-pink-200 rounded cursor-pointer"
+          >
+            {f.name}
+          </button>
+        ))}
       </div>
-      
 
+      {/* Capture Button */}
       {photos.length < 3 && (
         <button
           onClick={startCountdown}
-          className="mb-2 mt-4 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
+          className="mt-4 w-full bg-pink-100 text-pink-400 
+px-3 py-1.5 text-sm 
+sm:px-4 sm:py-2 sm:text-base 
+md:px-5 md:py-2.5 md:text-lg 
+rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
         >
           Say Cheese {photos.length + 1}/3
         </button>
       )}
 
+      {/* Result Section */}
       {photos.length === 3 && (
-        <>
+        <div className="w-full max-w-xs flex flex-col items-center">
           <textarea
-            className="w-full max-w-md border rounded p-2 mb-4 mt-4 text-black"
+            className="w-full border rounded p-2 mt-4 text-black"
             placeholder="Write a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
-          <div className="bg-white p-4 rounded shadow w-full max-w-md">
+
+          <div className="bg-white p-3 rounded shadow w-full mt-4">
             {photos.map((src, i) => (
-              <img key={i} src={src} alt={`photo-${i}`} className="mb-2 border rounded" />
+              <img
+                key={i}
+                src={src}
+                alt={`photo-${i}`}
+                className="mb-2 rounded"
+              />
             ))}
             <p className="italic text-sm">{message}</p>
           </div>
+
           <button
             onClick={uploadToSupabase}
-            className="mt-6 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
+            className="mt-4 w-full bg-pink-100 text-pink-400 
+px-3 py-1.5 text-sm 
+sm:px-4 sm:py-2 sm:text-base 
+md:px-5 md:py-2.5 md:text-lg 
+rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
           >
             {user ? "Save to Library" : "Login to Save"}
           </button>
+
           <button
             onClick={cancelUpload}
-            className="mt-2 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
+            className="mt-2 w-full bg-pink-100 text-pink-400 
+px-3 py-1.5 text-sm 
+sm:px-4 sm:py-2 sm:text-base 
+md:px-5 md:py-2.5 md:text-lg 
+rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
           >
             Cancel Upload
           </button>
+
           <button
             onClick={downloadPhotostrip}
-            className="mt-2 w-75 bg-pink-100 text-pink-400 px-4 py-2 rounded hover:bg-pink-200 cursor-pointer"
+            className="mt-2 w-full bg-pink-100 text-pink-400 
+px-3 py-1.5 text-sm 
+sm:px-4 sm:py-2 sm:text-base 
+md:px-5 md:py-2.5 md:text-lg 
+rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
           >
             Download Photo Strip
           </button>
-        </>
+        </div>
       )}
     </div>
-  );
+  </div>
+);
 }

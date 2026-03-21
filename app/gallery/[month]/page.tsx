@@ -112,47 +112,71 @@ export default function GalleryPage() {
   
 
   return (
-    <div className="p-10 bg-black ">
-      <h1 className="text-2xl text-white font-bold mb-4">
-        {month?.charAt(0).toUpperCase() + month?.slice(1)} Gallery
-      </h1>
-      {loading ? (
-        <p className="text-white">Loading...</p>
-      ) : photos.length === 0 ? (
-        <p className="text-white">No photos yet!</p>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-white">
-          {photos.map(({ id, image_url }, i) => (
-            <div key={id} className="border rounded shadow p-2">
+  <div className="w-full max-w-6xl mx-auto px-4 py-6">
+
+    {/* Title */}
+    <h1 className="text-xl sm:text-2xl text-white font-bold mb-6 text-center md:text-left">
+      {month?.charAt(0).toUpperCase() + month?.slice(1)} Gallery
+    </h1>
+
+    {loading ? (
+      <p className="text-white text-center">Loading...</p>
+    ) : photos.length === 0 ? (
+      <p className="text-white text-center">No photos yet!</p>
+    ) : (
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+
+        {photos.map(({ id, image_url }, i) => (
+          <div
+            key={id}
+            className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col"
+          >
+
+            {/* Image */}
+            <div className="w-full aspect-[2/5] overflow-hidden">
               <Image
                 src={
-                  supabase.storage.from("photostripes").getPublicUrl(image_url).data.publicUrl
+                  supabase.storage
+                    .from("photostripes")
+                    .getPublicUrl(image_url).data.publicUrl
                 }
                 alt={`photo-${i}`}
                 width={500}
                 height={900}
-                className="rounded"
+                className="w-full h-auto object-cover"
               />
-              
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => downloadPhoto(image_url)}
-                  className="ml-2 px-1 py-1 text-sm bg-black  rounded cursor-pointer"
-                >
-                  <img src="/download.png" alt="download" className="w-5 h-5" />
-                </button>
-
-                <button
-                  onClick={() => deletePhoto(id, image_url)}
-                  className="px-1 py-1 text-sm bg-black rounded cursor-pointer"
-                >
-                  <img src="/delete.png" alt="delete" className="w-6 h-6" />
-                </button>
-              </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+
+            {/* Actions */}
+            <div className="flex justify-between items-center p-2">
+              <button
+                onClick={() => downloadPhoto(image_url)}
+                className="p-1.5 sm:p-2 bg-black rounded hover:bg-gray-800 transition"
+              >
+                <img
+                  src="/download.png"
+                  alt="download"
+                  className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
+                />
+              </button>
+
+              <button
+                onClick={() => deletePhoto(id, image_url)}
+                className="p-1.5 sm:p-2 bg-black rounded hover:bg-gray-800 transition"
+              >
+                <img
+                  src="/delete.png"
+                  alt="delete"
+                  className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
+                />
+              </button>
+            </div>
+
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 }
