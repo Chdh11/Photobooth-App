@@ -79,13 +79,39 @@ export default function CameraPage() {
     };
   }, []);
 
+  const applyFilterToImage = (
+  rawImage: string,
+  filter: string
+): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!filter || filter === "none") return resolve(rawImage);
+
+    const img = new Image();
+    img.src = rawImage;
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(rawImage);
+
+      ctx.filter = filter;
+      ctx.drawImage(img, 0, 0);
+
+      resolve(canvas.toDataURL("image/jpeg", 0.95));
+    };
+  });
+};
+
   const capturePhoto = () => {
   const canvas = canvasRef.current;
   const video = videoRef.current;
   if (!canvas || !video) return;
 
   const CAPTURE_WIDTH = 960;
-  const CAPTURE_HEIGHT = 720; // 4:3
+  const CAPTURE_HEIGHT = 720;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -93,15 +119,14 @@ export default function CameraPage() {
   const videoW = video.videoWidth;
   const videoH = video.videoHeight;
 
-  if (!videoW || !videoH) return; // safety for mobile
+  if (!videoW || !videoH) return;
 
   canvas.width = CAPTURE_WIDTH;
   canvas.height = CAPTURE_HEIGHT;
 
-  // reset
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  // 👉 center crop instead of stretch
+  // 🔥 CENTER CROP (no distortion)
   const targetRatio = CAPTURE_WIDTH / CAPTURE_HEIGHT;
   const videoRatio = videoW / videoH;
 
@@ -111,11 +136,9 @@ export default function CameraPage() {
     sHeight = videoH;
 
   if (videoRatio > targetRatio) {
-    // wider → crop sides
     sWidth = videoH * targetRatio;
     sx = (videoW - sWidth) / 2;
   } else {
-    // taller → crop top/bottom
     sHeight = videoW / targetRatio;
     sy = (videoH - sHeight) / 2;
   }
@@ -136,33 +159,14 @@ export default function CameraPage() {
     CAPTURE_HEIGHT
   );
 
-  // reset
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   const rawImage = canvas.toDataURL("image/jpeg", 0.95);
 
-  // ✅ APPLY FILTER AFTER CAPTURE (stable everywhere)
-  if (filter !== "none") {
-    const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = CAPTURE_WIDTH;
-    tempCanvas.height = CAPTURE_HEIGHT;
-
-    const tctx = tempCanvas.getContext("2d");
-    if (!tctx) return;
-
-    const img = new Image();
-    img.src = rawImage;
-
-    img.onload = () => {
-      tctx.filter = filter;
-      tctx.drawImage(img, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
-
-      const finalImage = tempCanvas.toDataURL("image/jpeg", 0.95);
-      setPhotos((prev) => [...prev, finalImage].slice(0, 3));
-    };
-  } else {
-    setPhotos((prev) => [...prev, rawImage].slice(0, 3));
-  }
+  // ✅ APPLY FILTER (WAIT)
+  applyFilterToImage(rawImage, filter).then((finalImage) => {
+    setPhotos((prev) => [...prev, finalImage].slice(0, 3));
+  });
 
   setFlash(true);
   setTimeout(() => setFlash(false), 100);
