@@ -78,44 +78,74 @@ export default function CameraPage() {
       stream?.getTracks().forEach((track) => track.stop());
     };
   }, []);
+  const waitForVideoReady = (video: HTMLVideoElement): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (video.readyState >= 2) return resolve(true);
 
-  const capturePhoto = () => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    if (!canvas || !video) return;
+    const handler = () => {
+      video.removeEventListener("loadeddata", handler);
+      resolve(true);
+    };
 
-    const CAPTURE_WIDTH = 960;
-    const CAPTURE_HEIGHT = 720; // 4:3
+    video.addEventListener("loadeddata", handler);
+  });
+};
+  const capturePhoto = async () => {
+  const canvas = canvasRef.current;
+  const video = videoRef.current;
+  if (!canvas || !video) return;
 
-    canvas.width = CAPTURE_WIDTH;
-    canvas.height = CAPTURE_HEIGHT;
+  await waitForVideoReady(video); // 🔥 critical
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const width = video.videoWidth;
+  const height = video.videoHeight;
 
-    // ✅ reset before applying transforms
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (!width || !height) return; // safety
 
-    // ✅ apply filter properly
-    ctx.filter = filter;
+  canvas.width = width;
+  canvas.height = height;
 
-    // ✅ mirror
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
 
-    ctx.drawImage(video, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // ✅ reset again (important for next operations)
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.filter = "none";
+  // mirror
+  ctx.translate(width, 0);
+  ctx.scale(-1, 1);
 
-    const dataURL = canvas.toDataURL("image/jpeg", 0.9);
+  ctx.drawImage(video, 0, 0, width, height);
 
-    setPhotos((prev) => [...prev, dataURL].slice(0, 3));
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    setFlash(true);
-    setTimeout(() => setFlash(false), 100);
-  };
+  const rawImage = canvas.toDataURL("image/jpeg", 0.9);
+
+  // ✅ apply filter AFTER capture (reliable on all devices)
+  if (filter !== "none") {
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = width;
+    tempCanvas.height = height;
+
+    const tctx = tempCanvas.getContext("2d");
+    if (!tctx) return;
+
+    const img = new Image();
+    img.src = rawImage;
+
+    img.onload = () => {
+      tctx.filter = filter;
+      tctx.drawImage(img, 0, 0, width, height);
+
+      const finalImage = tempCanvas.toDataURL("image/jpeg", 0.9);
+      setPhotos((prev) => [...prev, finalImage].slice(0, 3));
+    };
+  } else {
+    setPhotos((prev) => [...prev, rawImage].slice(0, 3));
+  }
+
+  setFlash(true);
+  setTimeout(() => setFlash(false), 100);
+};
 
   const startCountdown = () => {
     let timeLeft = 3;
