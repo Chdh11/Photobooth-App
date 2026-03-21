@@ -78,53 +78,74 @@ export default function CameraPage() {
       stream?.getTracks().forEach((track) => track.stop());
     };
   }, []);
-  const waitForVideoReady = (video: HTMLVideoElement): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (video.readyState >= 2) return resolve(true);
 
-    const handler = () => {
-      video.removeEventListener("loadeddata", handler);
-      resolve(true);
-    };
-
-    video.addEventListener("loadeddata", handler);
-  });
-};
-  const capturePhoto = async () => {
+  const capturePhoto = () => {
   const canvas = canvasRef.current;
   const video = videoRef.current;
   if (!canvas || !video) return;
 
-  await waitForVideoReady(video); // 🔥 critical
-
-  const width = video.videoWidth;
-  const height = video.videoHeight;
-
-  if (!width || !height) return; // safety
-
-  canvas.width = width;
-  canvas.height = height;
+  const CAPTURE_WIDTH = 960;
+  const CAPTURE_HEIGHT = 720; // 4:3
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
+  const videoW = video.videoWidth;
+  const videoH = video.videoHeight;
+
+  if (!videoW || !videoH) return; // safety for mobile
+
+  canvas.width = CAPTURE_WIDTH;
+  canvas.height = CAPTURE_HEIGHT;
+
+  // reset
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  // 👉 center crop instead of stretch
+  const targetRatio = CAPTURE_WIDTH / CAPTURE_HEIGHT;
+  const videoRatio = videoW / videoH;
+
+  let sx = 0,
+    sy = 0,
+    sWidth = videoW,
+    sHeight = videoH;
+
+  if (videoRatio > targetRatio) {
+    // wider → crop sides
+    sWidth = videoH * targetRatio;
+    sx = (videoW - sWidth) / 2;
+  } else {
+    // taller → crop top/bottom
+    sHeight = videoW / targetRatio;
+    sy = (videoH - sHeight) / 2;
+  }
 
   // mirror
-  ctx.translate(width, 0);
+  ctx.translate(CAPTURE_WIDTH, 0);
   ctx.scale(-1, 1);
 
-  ctx.drawImage(video, 0, 0, width, height);
+  ctx.drawImage(
+    video,
+    sx,
+    sy,
+    sWidth,
+    sHeight,
+    0,
+    0,
+    CAPTURE_WIDTH,
+    CAPTURE_HEIGHT
+  );
 
+  // reset
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  const rawImage = canvas.toDataURL("image/jpeg", 0.9);
+  const rawImage = canvas.toDataURL("image/jpeg", 0.95);
 
-  // ✅ apply filter AFTER capture (reliable on all devices)
+  // ✅ APPLY FILTER AFTER CAPTURE (stable everywhere)
   if (filter !== "none") {
     const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = width;
-    tempCanvas.height = height;
+    tempCanvas.width = CAPTURE_WIDTH;
+    tempCanvas.height = CAPTURE_HEIGHT;
 
     const tctx = tempCanvas.getContext("2d");
     if (!tctx) return;
@@ -134,9 +155,9 @@ export default function CameraPage() {
 
     img.onload = () => {
       tctx.filter = filter;
-      tctx.drawImage(img, 0, 0, width, height);
+      tctx.drawImage(img, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
 
-      const finalImage = tempCanvas.toDataURL("image/jpeg", 0.9);
+      const finalImage = tempCanvas.toDataURL("image/jpeg", 0.95);
       setPhotos((prev) => [...prev, finalImage].slice(0, 3));
     };
   } else {
@@ -147,21 +168,23 @@ export default function CameraPage() {
   setTimeout(() => setFlash(false), 100);
 };
 
-  const startCountdown = () => {
-    let timeLeft = 3;
-    setCountdown(timeLeft);
-    const interval = setInterval(() => {
-      timeLeft -= 1;
-      setCountdown(timeLeft);
-      if (timeLeft === 0) {
-        clearInterval(interval);
-        setCountdown(null);
-        capturePhoto();
-      }
-    }, 1000);
-  };
+const startCountdown = () => {
+  let timeLeft = 3;
+  setCountdown(timeLeft);
 
-  const generatePhotostripCanvas = async () => {
+  const interval = setInterval(() => {
+    timeLeft -= 1;
+    setCountdown(timeLeft);
+
+    if (timeLeft === 0) {
+      clearInterval(interval);
+      setCountdown(null);
+      capturePhoto();
+    }
+  }, 1000);
+};
+
+const generatePhotostripCanvas = async () => {
   if (photos.length < 3) return null;
 
   const PHOTO_W = 960;
@@ -175,7 +198,7 @@ export default function CameraPage() {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  // white background
+  // background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -185,14 +208,13 @@ export default function CameraPage() {
 
     await new Promise((resolve) => {
       img.onload = () => {
-        // ✅ NO distortion (fixed dimensions)
         ctx.drawImage(img, 0, i * PHOTO_H, PHOTO_W, PHOTO_H);
         resolve(null);
       };
     });
   }
 
-  // ✅ message styling (safe + centered)
+  // message
   ctx.fillStyle = "#000";
   ctx.font = "28px sans-serif";
   ctx.textAlign = "center";
