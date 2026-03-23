@@ -10,7 +10,7 @@ export default function CameraPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("none");
+  const [filter, setFilter] = useState("contrast(120%) brightness(110%) saturate(110%)");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -79,32 +79,6 @@ export default function CameraPage() {
     };
   }, []);
 
-  const applyFilterToImage = (
-  rawImage: string,
-  filter: string
-): Promise<string> => {
-  return new Promise((resolve) => {
-    if (!filter || filter === "none") return resolve(rawImage);
-
-    const img = new Image();
-    img.src = rawImage;
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return resolve(rawImage);
-
-      ctx.filter = filter;
-      ctx.drawImage(img, 0, 0);
-
-      resolve(canvas.toDataURL("image/jpeg", 0.95));
-    };
-  });
-};
-
   const capturePhoto = () => {
   const canvas = canvasRef.current;
   const video = videoRef.current;
@@ -126,14 +100,10 @@ export default function CameraPage() {
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-  // 🔥 CENTER CROP (no distortion)
   const targetRatio = CAPTURE_WIDTH / CAPTURE_HEIGHT;
   const videoRatio = videoW / videoH;
 
-  let sx = 0,
-    sy = 0,
-    sWidth = videoW,
-    sHeight = videoH;
+  let sx = 0, sy = 0, sWidth = videoW, sHeight = videoH;
 
   if (videoRatio > targetRatio) {
     sWidth = videoH * targetRatio;
@@ -143,30 +113,20 @@ export default function CameraPage() {
     sy = (videoH - sHeight) / 2;
   }
 
+  // ✅ Apply filter BEFORE drawing (while context is fresh)
+  ctx.filter = filter !== "none" ? filter : "none";
+
   // mirror
   ctx.translate(CAPTURE_WIDTH, 0);
   ctx.scale(-1, 1);
 
-  ctx.drawImage(
-    video,
-    sx,
-    sy,
-    sWidth,
-    sHeight,
-    0,
-    0,
-    CAPTURE_WIDTH,
-    CAPTURE_HEIGHT
-  );
+  ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.filter = "none"; // reset after drawing
 
-  const rawImage = canvas.toDataURL("image/jpeg", 0.95);
-
-  // ✅ APPLY FILTER (WAIT)
-  applyFilterToImage(rawImage, filter).then((finalImage) => {
-    setPhotos((prev) => [...prev, finalImage].slice(0, 3));
-  });
+  const finalImage = canvas.toDataURL("image/jpeg", 0.95);
+  setPhotos((prev) => [...prev, finalImage].slice(0, 3));
 
   setFlash(true);
   setTimeout(() => setFlash(false), 100);
