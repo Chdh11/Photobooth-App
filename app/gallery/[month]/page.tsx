@@ -134,7 +134,7 @@ export default function GalleryPage() {
           >
 
             {/* Image */}
-            <div className="w-full aspect-[2/5] overflow-hidden">
+            <div className="w-full aspect-[1/3] overflow-hidden">
               <Image
                 src={
                   supabase.storage

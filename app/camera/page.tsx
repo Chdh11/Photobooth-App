@@ -5,15 +5,18 @@ import supabase from "../../lib/supabaseClient";
 import { User } from "@supabase/supabase-js";
 
 export default function CameraPage() {
+  type TemplateKey = keyof typeof STRIP_TEMPLATES;
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("contrast(120%) brightness(110%) saturate(110%)");
+  const [filter, setFilter] = useState("none");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateKey>("pink");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const filters = [
   { name: "Normal", value: "contrast(120%) brightness(110%) saturate(110%)" },
@@ -36,7 +39,82 @@ export default function CameraPage() {
   { name: "Midnight", value: "brightness(90%) contrast(100%) saturate(80%) hue-rotate(50deg)" },
 ];
 
+
+
+const STRIP_TEMPLATES = {
+  pink: {
+    title: "Pink",
+    src: "/pink_template.png",
+    width: 960,
+    height: 2880,
+
+    positions: [
+    { x: 0, y: 216, w: 960, h: 720 },
+    { x: 0, y: 1001, w: 960, h: 720 },
+    { x: 0, y: 1786, w: 960, h: 720 },
+    ],
+
+    text: {
+      y: 2650,
+      font: "32px sans-serif",
+      color: "#000",
+      maxWidth: 800,
+    },
+  },
+  olive: {
+    title: "Olive",
+    src: "/olive_template.png",
+    width: 960,
+    height: 2880,
+
+    positions: [
+    { x: 0, y: 182.7, w: 960, h: 720 },
+    { x: 0, y: 974.9, w: 960, h: 720 },
+    { x: 0, y: 1767.1, w: 960, h: 720 },
+    ],
+
+    text: {
+      y: 2650,
+      font: "50px sans-serif",
+      color: "#05522c",
+      maxWidth: 800,
+    },
+  },
+  birthday_y2k: {
+    title: "Birthday Y2K",
+    src: "/y2k_birthday_template.png",
+    width: 960,
+    height: 2880,
+
+    positions: [
+    { x: 0, y: 201.4, w: 960, h: 720 },
+    { x: 0, y: 984.3, w: 960, h: 720 },
+    { x: 0, y: 1767.3, w: 960, h: 720 },
+    ],
+
+    text: {
+      y: 2650,
+      font: "50px sans-serif",
+      color: "#edf5f1",
+      maxWidth: 800,
+    },
+  }
+}
+useEffect(() => {
+  const generatePreview = async () => {
+    if (photos.length === 3) {
+      const canvas = await generatePhotostripCanvas();
+      if (canvas) {
+        setPreviewUrl(canvas.toDataURL("image/jpeg"));
+      }
+    }
+  };
+
+  generatePreview();
+}, [photos, message, selectedTemplate]);
+
   useEffect(() => {
+    
     let stream: MediaStream;
     
 
@@ -79,6 +157,32 @@ export default function CameraPage() {
     };
   }, []);
 
+  const applyFilterToImage = (
+  rawImage: string,
+  filter: string
+): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!filter || filter === "none") return resolve(rawImage);
+
+    const img = new Image();
+    img.src = rawImage;
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(rawImage);
+
+      ctx.filter = filter;
+      ctx.drawImage(img, 0, 0);
+
+      resolve(canvas.toDataURL("image/jpeg", 0.95));
+    };
+  });
+};
+
   const capturePhoto = () => {
   const canvas = canvasRef.current;
   const video = videoRef.current;
@@ -100,10 +204,14 @@ export default function CameraPage() {
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 
+  // 🔥 CENTER CROP (no distortion)
   const targetRatio = CAPTURE_WIDTH / CAPTURE_HEIGHT;
   const videoRatio = videoW / videoH;
 
-  let sx = 0, sy = 0, sWidth = videoW, sHeight = videoH;
+  let sx = 0,
+    sy = 0,
+    sWidth = videoW,
+    sHeight = videoH;
 
   if (videoRatio > targetRatio) {
     sWidth = videoH * targetRatio;
@@ -113,20 +221,30 @@ export default function CameraPage() {
     sy = (videoH - sHeight) / 2;
   }
 
-  // ✅ Apply filter BEFORE drawing (while context is fresh)
-  ctx.filter = filter !== "none" ? filter : "none";
-
   // mirror
   ctx.translate(CAPTURE_WIDTH, 0);
   ctx.scale(-1, 1);
 
-  ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
+  ctx.drawImage(
+    video,
+    sx,
+    sy,
+    sWidth,
+    sHeight,
+    0,
+    0,
+    CAPTURE_WIDTH,
+    CAPTURE_HEIGHT
+  );
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.filter = "none"; // reset after drawing
 
-  const finalImage = canvas.toDataURL("image/jpeg", 0.95);
-  setPhotos((prev) => [...prev, finalImage].slice(0, 3));
+  const rawImage = canvas.toDataURL("image/jpeg", 0.95);
+
+  // ✅ APPLY FILTER (WAIT)
+  applyFilterToImage(rawImage, filter).then((finalImage) => {
+    setPhotos((prev) => [...prev, finalImage].slice(0, 3));
+  });
 
   setFlash(true);
   setTimeout(() => setFlash(false), 100);
@@ -147,17 +265,91 @@ const startCountdown = () => {
     }
   }, 1000);
 };
+// const generatePhotostripCanvas = async () => {
+//   if (photos.length < 3) return null;
 
+//   const WIDTH = 960;
+//   const HEIGHT = 2880;
+
+//   const canvas = document.createElement("canvas");
+//   canvas.width = WIDTH;
+//   canvas.height = HEIGHT;
+
+//   const ctx = canvas.getContext("2d");
+//   if (!ctx) return null;
+
+//   // background
+//   ctx.fillStyle = "#ffffff";
+//   ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+//   // positions aligned to your Canva template
+//   const positions = [
+//     { x: 0, y: 216, w: 960, h: 720 },
+//     { x: 0, y: 1001, w: 960, h: 720 },
+//     { x: 0, y: 1786, w: 960, h: 720 },
+//   ];
+
+//   // draw photos safely
+//   for (let i = 0; i < 3; i++) {
+//     const img = new Image();
+//     img.src = photos[i];
+
+//     await new Promise((resolve) => {
+//       const draw = () => {
+//         const pos = positions[i];
+
+//         ctx.drawImage(
+//           img,
+//           pos.x ,
+//           pos.y ,
+//           pos.w ,
+//           pos.h 
+//         );
+
+//         resolve(null);
+//       };
+
+//       if (img.complete) draw();
+//       else img.onload = draw;
+//     });
+//   }
+
+//   // load template safely
+//   const template = new Image();
+//   template.src = "/pink_template.png";
+
+//   await new Promise((resolve) => {
+//     if (template.complete) resolve(null);
+//     else template.onload = resolve;
+//   });
+
+//   // draw overlay
+//   ctx.drawImage(template, 0, 0, WIDTH, HEIGHT);
+
+//   // message styling
+//   ctx.fillStyle = "#000";
+//   ctx.font = "32px sans-serif";
+//   ctx.textAlign = "center";
+
+//   const maxWidth = 800;
+
+//   ctx.fillText(
+//     message || "",
+//     WIDTH / 2,
+//     2650,
+//     maxWidth
+//   );
+
+//   return canvas;
+// };
 const generatePhotostripCanvas = async () => {
   if (photos.length < 3) return null;
 
-  const PHOTO_W = 960;
-  const PHOTO_H = 720;
-  const MESSAGE_SPACE = 120;
+  const templateConfig = STRIP_TEMPLATES[selectedTemplate];
 
   const canvas = document.createElement("canvas");
-  canvas.width = PHOTO_W;
-  canvas.height = PHOTO_H * 3 + MESSAGE_SPACE;
+  canvas.width = templateConfig.width;
+  canvas.height = templateConfig.height;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
@@ -166,31 +358,100 @@ const generatePhotostripCanvas = async () => {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let i = 0; i < photos.length; i++) {
+  // draw photos
+  for (let i = 0; i < 3; i++) {
     const img = new Image();
     img.src = photos[i];
 
     await new Promise((resolve) => {
-      img.onload = () => {
-        ctx.drawImage(img, 0, i * PHOTO_H, PHOTO_W, PHOTO_H);
+      const draw = () => {
+        const pos = templateConfig.positions[i];
+
+        ctx.drawImage(
+          img,
+          pos.x,
+          pos.y,
+          pos.w,
+          pos.h
+        );
+
         resolve(null);
       };
+
+      if (img.complete) draw();
+      else img.onload = draw;
     });
   }
 
-  // message
-  ctx.fillStyle = "#000";
-  ctx.font = "28px sans-serif";
+  // load template
+  const template = new Image();
+  template.src = templateConfig.src;
+
+  await new Promise((resolve) => {
+    if (template.complete) resolve(null);
+    else template.onload = resolve;
+  });
+
+  ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+
+  // text styling
+  ctx.fillStyle = templateConfig.text.color;
+  ctx.font = templateConfig.text.font;
   ctx.textAlign = "center";
 
   ctx.fillText(
     message || "",
     canvas.width / 2,
-    PHOTO_H * 3 + 70
+    templateConfig.text.y,
+    templateConfig.text.maxWidth
   );
 
   return canvas;
 };
+
+// const generatePhotostripCanvas = async () => {
+//   if (photos.length < 3) return null;
+
+//   const PHOTO_W = 960;
+//   const PHOTO_H = 720;
+//   const MESSAGE_SPACE = 120;
+
+//   const canvas = document.createElement("canvas");
+//   canvas.width = PHOTO_W;
+//   canvas.height = PHOTO_H * 3 + MESSAGE_SPACE;
+
+//   const ctx = canvas.getContext("2d");
+//   if (!ctx) return null;
+
+//   // background
+//   ctx.fillStyle = "#ffffff";
+//   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+//   for (let i = 0; i < photos.length; i++) {
+//     const img = new Image();
+//     img.src = photos[i];
+
+//     await new Promise((resolve) => {
+//       img.onload = () => {
+//         ctx.drawImage(img, 0, i * PHOTO_H, PHOTO_W, PHOTO_H);
+//         resolve(null);
+//       };
+//     });
+//   }
+
+//   // message
+//   ctx.fillStyle = "#000";
+//   ctx.font = "28px sans-serif";
+//   ctx.textAlign = "center";
+
+//   ctx.fillText(
+//     message || "",
+//     canvas.width / 2,
+//     PHOTO_H * 3 + 70
+//   );
+
+//   return canvas;
+// };
 
   // const uploadToServer = async () => {
   //   const photoboothCanvas = await generatePhotostripCanvas();
@@ -363,9 +624,26 @@ rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
         </button>
       )}
 
+      
+
       {/* Result Section */}
       {photos.length === 3 && (
+        
         <div className="w-full max-w-xs flex flex-col items-center">
+          <h1 className="mt-5 font-bold">Choose your Photostripe design...</h1>
+          <div className="flex gap-2 mt-3">
+          {(Object.keys(STRIP_TEMPLATES) as TemplateKey[]).map((key) => (
+            <button
+              key={key}
+              onClick={() => setSelectedTemplate(key)}
+              className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm md:px-4 md:py-2 md:text-base rounded cursor-pointer ${
+                selectedTemplate === key ? "bg-pink-300" : "bg-pink-100"
+              }`}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
           <textarea
             className="w-full border rounded p-2 mt-4 text-black"
             placeholder="Write a message..."
@@ -373,7 +651,7 @@ rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
             onChange={(e) => setMessage(e.target.value)}
           />
 
-          <div className="bg-white p-3 rounded shadow w-full mt-4">
+          {/* <div className="bg-white p-3 rounded shadow w-full mt-4">
             {photos.map((src, i) => (
               <img
                 key={i}
@@ -383,6 +661,17 @@ rounded font-medium transition-all hover:bg-pink-200 cursor-pointer"
               />
             ))}
             <p className="italic text-sm">{message}</p>
+          </div> */}
+          <div className="bg-white p-3 rounded shadow w-full mt-4 flex justify-center">
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="photostrip"
+                className="w-full rounded"
+              />
+            ) : (
+              <p className="text-gray-400">Generating preview...</p>
+            )}
           </div>
 
           <button
